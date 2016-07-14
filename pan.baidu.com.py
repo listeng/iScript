@@ -1,5 +1,4 @@
-#!/usr/bin/env python2
-# vim: set fileencoding=utf8
+#coding=cp936
 
 import os
 import sys
@@ -208,6 +207,8 @@ def print_process_bar(point, total, slice_size,
     nowpoint = point / (total + 0.0)
     percent = round(100 * nowpoint, 1)
     now = time.time()
+    if now == start_time:
+        now += 1
     speed = sizeof_fmt(slice_size / (now - start_time)) + '/s'
     t = int(nowpoint*length)
 
@@ -313,7 +314,7 @@ class panbaiducom_HOME(object):
     @staticmethod
     def save_img(url, ext):
         path = os.path.join(os.path.expanduser('~'), 'vcode.%s' % ext)
-        with open(path, 'w') as g:
+        with open(path, 'wb') as g:
             res = ss.get(url)
             data = res.content
             g.write(data)
@@ -581,7 +582,7 @@ class panbaiducom_HOME(object):
         t, tt = [], []
         if 'e' in args.type_:
             for i in dirs:
-                d = i['path'].encode('utf8')
+                d = i['path'].encode('gbk')
                 j = self._get_file_list('name', None, d, 1, all=False)
                 if not j['list']:
                     t.append(i)
@@ -766,7 +767,7 @@ class panbaiducom_HOME(object):
             j = r.json()
             print(j)
             if j['errno'] == 0:
-                dlink = j['dlink'][0]['dlink'].encode('utf8')
+                dlink = j['dlink'][0]['dlink'].encode('gbk')
                 # dlink = re.sub(r'prisign=.+?(&|$)', r'prisign=unknow\1', dlink)
                 # dlink = dlink.replace('chkbd=0', 'chkbd=1')
                 # dlink = dlink.replace('chkv=0', 'chkv=1')
@@ -777,9 +778,9 @@ class panbaiducom_HOME(object):
                 continue
 
     def _get_dlink2(self, i):
-        j = self._meta([i['path'].encode('utf8')], dlink=1)
+        j = self._meta([i['path'].encode('gbk')], dlink=1)
         if j:
-            return j['info'][0]['dlink'].encode('utf8')
+            return j['info'][0]['dlink'].encode('gbk')
         else:
             print s % (1, 91, '  !! Error at _get_dlink2')
             sys.exit(1)
@@ -787,7 +788,7 @@ class panbaiducom_HOME(object):
     def _get_m3u8(self, info):
         p = {
             "method": "streaming",
-            "path": info['path'].encode('utf8'),
+            "path": info['path'].encode('gbk'),
             "type": "M3U8_AUTO_720",
             "app_id": "250528",
             #"bdstoken": self._get_bdstoken(),
@@ -818,7 +819,7 @@ class panbaiducom_HOME(object):
                         if j['list']:
                             if args.recursive:
                                 for i in j['list']:
-                                    dir_loop.append(i['path'].encode('utf8')) \
+                                    dir_loop.append(i['path'].encode('gbk')) \
                                         if i['isdir'] else None
 
                             if args.play:
@@ -846,21 +847,21 @@ class panbaiducom_HOME(object):
                             for i in j['list']:
                                 if i['isdir']: continue
 
-                                t = i['path'].encode('utf8')
+                                t = i['path'].encode('gbk')
                                 t = t.replace(base_dir, '')
                                 t = t[1:] if t[0] == '/' else t
                                 t =  os.path.join(os.getcwd(), t)
 
-                                i['dlink'] = self._get_dlink(i['path'].encode('utf8'))
+                                i['dlink'] = self._get_dlink(i['path'].encode('gbk'))
 
                                 infos = {
                                     'file': t,
-                                    'path': i['path'].encode('utf8'),
+                                    'path': i['path'].encode('gbk'),
                                     'dir_': os.path.split(t)[0],
-                                    'dlink': i['dlink'].encode('utf8'),
+                                    'dlink': i['dlink'].encode('gbk'),
                                     'm3u8': self._get_m3u8(i) \
                                         if 'm3' in args.type_ else None,
-                                    'name': i['server_filename'].encode('utf8'),
+                                    'name': i['server_filename'].encode('gbk'),
                                     'size': i['size'],
                                     'nn': nn,
                                     'total_file': total_file
@@ -872,17 +873,17 @@ class panbaiducom_HOME(object):
 
                 elif not meta['info'][0]['isdir']:
                     t =  os.path.join(
-                        os.getcwd(), meta['info'][0]['server_filename'].encode('utf8')
+                        os.getcwd(), meta['info'][0]['server_filename'].encode('gbk')
                     )
                     infos = {
                         'file': t,
-                        'path': meta['info'][0]['path'].encode('utf8'),
+                        'path': meta['info'][0]['path'].encode('gbk'),
                         'dir_': os.path.split(t)[0],
-                        'dlink': self._get_dlink(meta['info'][0]['path'].encode('utf8')),
+                        'dlink': self._get_dlink(meta['info'][0]['path'].encode('gbk')),
                         'm3u8': self._get_m3u8(meta['info'][0]) \
                             if 'm3' in args.type_ else None,
-                        # 'dlink': meta['info'][0]['dlink'].encode('utf8'),
-                        'name': meta['info'][0]['server_filename'].encode('utf8'),
+                        # 'dlink': meta['info'][0]['dlink'].encode('gbk'),
+                        'name': meta['info'][0]['server_filename'].encode('gbk'),
                         'size': meta['info'][0]['size'],
                     }
                     if args.play:
@@ -1152,15 +1153,16 @@ class panbaiducom_HOME(object):
         }
 
         if self.toEncrypt and 'np' not in args.type_:
-            p['path'] = os.path.join(rpath, 'encrypted_' + os.path.basename(lpath))
+            p['path'] = os.path.join(rpath, 'encrypted_' + os.path.basename(lpath)).replace('\\', '//')
         else:
-            p['path'] = os.path.join(rpath, os.path.basename(lpath))
+            p['path'] = os.path.join(rpath, os.path.basename(lpath)).replace('\\', '//')
 
         data = {
             'param': json.dumps(
                 {'block_list': self.upload_datas[lpath]['slice_md5s']}
             )
         }
+        
         url = 'https://c.pcs.baidu.com/rest/2.0/pcs/file'
         r = ss.post(url, params=p, data=data, verify=VERIFY)
         if r.ok:
@@ -1415,6 +1417,7 @@ class panbaiducom_HOME(object):
     def upload(self, localpaths, remotepath):
         remotepath = make_server_path(self.cwd, remotepath)
         rpath = remotepath if remotepath[0] == '/' else '/' + remotepath
+        rpath = rpath.decode('gbk')
         self.upload_datas = {}
         if os.path.exists(upload_datas_path):
             f = open(upload_datas_path, 'rb')
@@ -1429,7 +1432,7 @@ class panbaiducom_HOME(object):
             self.toEncrypt = False
 
         for localpath in localpaths:
-            lpath = get_abspath(localpath)
+            lpath = get_abspath(localpath).decode('gbk')
 
             if not lpath:
                 print s % (1, 91, '  !! Error: localpath doesn\'t exist')
@@ -1455,9 +1458,9 @@ class panbaiducom_HOME(object):
     # for saving shares
 
     def _share_transfer(self, info):
-        meta = self._meta([info['remotepath'].encode('utf8')])
+        meta = self._meta([info['remotepath'].encode('gbk')])
         if not meta:
-            self._make_dir(info['remotepath'].encode('utf8'))
+            self._make_dir(info['remotepath'].encode('gbk'))
 
         if not info['isdir']:
             remote_file_path = '/'.join(
@@ -1487,11 +1490,11 @@ class panbaiducom_HOME(object):
             "bdstoken": self._get_bdstoken()
         }
         data = "path=" \
-            + urllib.quote_plus(info['remotepath'].encode('utf8')) \
+            + urllib.quote_plus(info['remotepath'].encode('gbk')) \
             + '&' \
             + "filelist=" \
             + urllib.quote_plus(
-                '["%s"]' % info['path'].encode('utf8')
+                '["%s"]' % info['path'].encode('gbk')
             )
 
         url = 'http://pan.baidu.com/share/transfer'
@@ -1511,7 +1514,7 @@ class panbaiducom_HOME(object):
             "clienttype": 0,
             "web": 1,
             "num": 10000,
-            "dir": info['path'].encode('utf8'),
+            "dir": info['path'].encode('gbk'),
             "t": int(time.time()*1000),
             "uk": self.uk,
             "shareid": self.shareid,
@@ -1621,18 +1624,18 @@ class panbaiducom_HOME(object):
     # for saveing inbox shares
 
     def _share_inbox_transfer(self, info, burl):
-        meta = self._meta([info['remotepath'].encode('utf8')])
+        meta = self._meta([info['remotepath'].encode('gbk')])
         if not meta:
-            self._make_dir(info['remotepath'].encode('utf8'))
+            self._make_dir(info['remotepath'].encode('gbk'))
 
         p = "channel=chunlei&" \
             + "clienttype=0&" \
             + "web=1&" \
             + "path=%s&" % urllib.quote_plus(
-                info['remotepath'].encode('utf8')
+                info['remotepath'].encode('gbk')
             ) \
             + "object_array=%s&" % urllib.quote_plus(
-                '["%s"]' % info['object_id'].encode('utf8')
+                '["%s"]' % info['object_id'].encode('gbk')
             ) \
             + "fsid_array=%s&" % urllib.quote_plus('[%s]' % info['fs_id']) \
             + "session_id=%s&" % self.session_id \
@@ -1801,23 +1804,23 @@ class panbaiducom_HOME(object):
             if background_color:
                 try:
                     t += s % (
-                        2, background_color, string_zones[i].encode('utf8')
+                        2, background_color, string_zones[i].encode('gbk')
                     ) \
                     + s % (
-                        2, highlight_color, string_zones[i+1].encode('utf8')
+                        2, highlight_color, string_zones[i+1].encode('gbk')
                     )
                 except:
                     t += s % (
-                        2, background_color, string_zones[i].encode('utf8')
+                        2, background_color, string_zones[i].encode('gbk')
                     )
             else:
                 try:
-                    t += string_zones[i].encode('utf8') \
+                    t += string_zones[i].encode('gbk') \
                          + s % (
-                             2, highlight_color, string_zones[i+1].encode('utf8')
+                             2, highlight_color, string_zones[i+1].encode('gbk')
                          )
                 except:
-                    t += string_zones[i].encode('utf8')
+                    t += string_zones[i].encode('gbk')
 
         return t
 
@@ -1834,7 +1837,7 @@ class panbaiducom_HOME(object):
             isdir = s % (1, 93, 'd') if info['isdir'] else s % (1, 97, '-')
             size = s % (1, 91, sizeof_fmt(info['size']).rjust(8))
             base_dir, filename = os.path.split(path)
-            base_dir = s % (2, 95, base_dir.encode('utf8')) \
+            base_dir = s % (2, 95, base_dir.encode('gbk')) \
                 if base_dir != '/' else '/'
 
             if info['isdir']:
@@ -1855,12 +1858,12 @@ class panbaiducom_HOME(object):
             isdir = 'd' if info['isdir'] else '-'
             size = sizeof_fmt(info['size']).rjust(8)
             if args.view:
-                path = path.encode('utf8')
+                path = path.encode('gbk')
             else:
-                path = os.path.basename(path).encode('utf8')
+                path = os.path.basename(path).encode('gbk')
 
         if args.view > 1 and info.get('md5'):
-            smd5 = info['md5'].encode('utf8')
+            smd5 = info['md5'].encode('gbk')
             template = '%s %s %s %s %s' % (
                 isdir, size, info['size'], smd5, path
             )
@@ -1906,11 +1909,11 @@ class panbaiducom_HOME(object):
                 comd = pipe[0]
                 if comd == 'd' or comd == 'download':
                     if not warn('download', display=True): return
-                    paths = [i['path'].encode('utf8') for i in infos]
+                    paths = [i['path'].encode('gbk') for i in infos]
                     self.download(paths)
                 elif comd == 'p' or comd == 'play':
                     if not warn('play', display=True): return
-                    paths = [i['path'].encode('utf8') for i in infos]
+                    paths = [i['path'].encode('gbk') for i in infos]
                     self._download_do = self._play_do
                     args.play = True
                     self.download(paths)
@@ -1924,7 +1927,7 @@ class panbaiducom_HOME(object):
                     self._rnre_do(foo, bar, infos)
                 elif comd == 'rm':
                     if not warn('remove', display=True): return
-                    paths = [i['path'].encode('utf8') for i in infos]
+                    paths = [i['path'].encode('gbk') for i in infos]
                     self.remove(paths)
                 elif comd == 'mv':
                     if len(pipe) < 2:
@@ -1932,7 +1935,7 @@ class panbaiducom_HOME(object):
                         sys.exit(1)
 
                     if not warn('move', display=True): return
-                    paths = [i['path'].encode('utf8') for i in infos]
+                    paths = [i['path'].encode('gbk') for i in infos]
                     remotepath = pipe[1]
                     self.move(paths, remotepath, check=False)
                 else:
@@ -1963,7 +1966,7 @@ class panbaiducom_HOME(object):
 
     def _ls_display(self, infos, dir_=None):
         if dir_:
-            print (dir_ + ':').encode('utf8')
+            print (dir_ + ':').encode('gbk')
             for info in infos:
                 self._find_display(info)
             print ''
@@ -1976,7 +1979,7 @@ class panbaiducom_HOME(object):
         sum_size = 0
         for dir_ in directorys:
             infos = self._get_file_list(
-                order, desc, dir_.encode('utf8'), 10000
+                order, desc, dir_.encode('gbk'), 10000
             )['list']
             tinfos = infos
             if args.heads or args.tails or args.includes or args.excludes \
@@ -2165,7 +2168,7 @@ class panbaiducom_HOME(object):
                 codestr = told_filename[:-7]
                 try:
                     decode_old_filename = base64.urlsafe_b64decode(
-                        codestr.encode('utf8')
+                        codestr.encode('gbk')
                     ).decode('utf8', 'ignore') + ext
                 except Exception:
                     decode_old_filename = old_filename
@@ -2181,9 +2184,9 @@ class panbaiducom_HOME(object):
 
             if old_filename == new_filename: continue
             old_path = info['path']
-            new_path = os.path.join(base_dir, new_filename).encode('utf8')
+            new_path = os.path.join(base_dir, new_filename).encode('gbk')
 
-            ls.append((old_path.encode('utf8'), new_path))
+            ls.append((old_path.encode('gbk'), new_path))
 
             # hightlight
             if info['isdir']:
@@ -2200,7 +2203,7 @@ class panbaiducom_HOME(object):
                     93
                 )
             old_path_highlight = os.path.join(
-                base_dir.encode('utf8'), old_filename_highlight
+                base_dir.encode('gbk'), old_filename_highlight
             )
             lshl.append((old_path_highlight, new_path))
 
@@ -2241,7 +2244,7 @@ class panbaiducom_HOME(object):
                     filename,
                     self.highlights, 93
                 )
-            path = os.path.join(base_dir.encode('utf8'), filename_highlight)
+            path = os.path.join(base_dir.encode('gbk'), filename_highlight)
             pathshl.append(path)
         print '\n'.join(pathshl)
         print s % (1, 93, '  matched above ↑')
@@ -2249,7 +2252,7 @@ class panbaiducom_HOME(object):
         ipt = raw_input(s % (1, 91, '  sure you want to %s all the files [y/N]: ' % type)).lower() \
             if not args.yes else 'y'
         if ipt == 'y':
-            paths = [i['path'].encode('utf8') for i in infos]
+            paths = [i['path'].encode('gbk') for i in infos]
             if type == 'remove':
                 self.remove(paths)
             if type == 'move':
@@ -2270,7 +2273,7 @@ class panbaiducom_HOME(object):
                     y = 1
                     for dir_ in directorys:
                         infos = self._get_file_list(
-                            'name', None, dir_.encode('utf8'), 10000
+                            'name', None, dir_.encode('gbk'), 10000
                         )['list']
                         tinfos += infos
                         if args.recursive:
@@ -2527,13 +2530,13 @@ class panbaiducom_HOME(object):
             if i['result'] == 0:
                 status_color = 92 if i['status'] == '0' else 91
                 print template % (
-                        i['id'].encode('utf8'),
+                        i['id'].encode('gbk'),
                         status_color,
-                        self.jobstatus.get(i['status'].encode('utf8'), '未知'),
+                        self.jobstatus.get(i['status'].encode('gbk'), '未知'),
                         i['done'],
-                        i['name'].encode('utf8'),
-                        i['path'].encode('utf8'),
-                        i['source'].encode('utf8'),
+                        i['name'].encode('gbk'),
+                        i['path'].encode('gbk'),
+                        i['source'].encode('gbk'),
                     )
             else:
                 print '%s %s\n' \
@@ -2622,7 +2625,7 @@ class panbaiducom_HOME(object):
             print s % (1, 91, '  !! Error at _query_task:'), j
             sys.exit(1)
 
-        jobids = [i['task_id'].encode('utf8') for i in j['task_info']]
+        jobids = [i['task_id'].encode('gbk') for i in j['task_info']]
         return jobids
 
     def job(self, jobids):
@@ -2753,7 +2756,7 @@ class panbaiducom_HOME(object):
             print s % (1, 91, '  !! Error at _share'), j
             sys.exit(1)
         else:
-            print '\n 链接地址:', s % (1, 92, j.get('shorturl').encode('utf8'))
+            print '\n 链接地址:', s % (1, 92, j.get('shorturl').encode('gbk'))
             if pwd: print '     密码:', s % (1, 91, pwd)
             #if 0 == meta['info'][0]['isdir']:
                 #print 'MD5:%s' % (meta['info'][0]['md5'])
@@ -2884,9 +2887,9 @@ class panbaiducom(object):
         j = json.loads(fileinfo)
 
         self.infos.update({
-            'name': j[0]['server_filename'].encode('utf8'),
+            'name': j[0]['server_filename'].encode('gbk'),
             'file': os.path.join(
-                os.getcwd(), j[0]['server_filename'].encode('utf8')
+                os.getcwd(), j[0]['server_filename'].encode('gbk')
             ),
             'dir_': os.getcwd(),
             'fs_id': j[0]['fs_id']
@@ -2900,7 +2903,7 @@ class panbaiducom(object):
             r = ss.post(url, data=data, params=self.params)
             j = r.json()
             if not j['errno']:
-                dlink = fast_pcs_server(j['dlink'].encode('utf8'))
+                dlink = fast_pcs_server(j['dlink'].encode('gbk'))
                 self.infos['dlink'] = dlink
                 if args.play:
                     panbaiducom_HOME._play_do(self.infos)
@@ -2972,12 +2975,12 @@ def sighandler(signum, frame):
     sys.exit(1)
 
 def handle_signal():
-    signal.signal(signal.SIGBUS, sighandler)
-    signal.signal(signal.SIGHUP, sighandler)
+    #signal.signal(signal.SIGBUS, sighandler)
+    #signal.signal(signal.SIGHUP, sighandler)
     # http://stackoverflow.com/questions/14207708/ioerror-errno-32-broken-pipe-python
-    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-    signal.signal(signal.SIGQUIT, sighandler)
-    signal.signal(signal.SIGSYS, sighandler)
+    #signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    #signal.signal(signal.SIGQUIT, sighandler)
+    #signal.signal(signal.SIGSYS, sighandler)
 
     signal.signal(signal.SIGABRT, sighandler)
     signal.signal(signal.SIGFPE, sighandler)
